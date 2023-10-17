@@ -1,0 +1,1 @@
+does this content from obsidian sync into gitbook?
