@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch NFC Scanner</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    h1 {
+      font-size: 1.5rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      margin-right: 1rem;
+      font-size: 1rem;
+    }
+    ul {
+      margin-top: 1rem;
+      padding-left: 1rem;
+    }
+    li {
+      padding: 0.25rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Batch NFC Scanner</h1>
+  <button id="startScanBtn">Start Batch Scan</button>
+  <button id="stopScanBtn" disabled>Stop Scan</button>
+  <ul id="scannedUsers"></ul>
+
+  <script>
+    let reader;
+    let scanning = false;
+
+    const startBtn = document.getElementById("startScanBtn");
+    const stopBtn = document.getElementById("stopScanBtn");
+    const scannedList = document.getElementById("scannedUsers");
+
+    startBtn.addEventListener("click", async () => {
+      if (!("NDEFReader" in window)) {
+        alert("Web NFC not supported on this device/browser.");
+        return;
+      }
+
+      reader = new NDEFReader();
+      try {
+        await reader.scan();
+        scanning = true;
+        stopBtn.disabled = false;
+        startBtn.disabled = true;
+
+        reader.onreading = (event) => {
+          const decoder = new TextDecoder();
+          const record = event.message.records[0];
+          const data = decoder.decode(record.data);
+
+          const existing = document.querySelector(`li[data-id="${data}"]`);
+          if (!existing) {
+            const li = document.createElement("li");
+            li.textContent = `Scanned: ${data}`;
+            li.dataset.id = data;
+            scannedList.appendChild(li);
+          }
+        };
+      } catch (err) {
+        console.error("NFC scan error:", err);
+        alert("Failed to start scan");
+      }
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (reader && scanning) {
+        reader = null;
+        scanning = false;
+        stopBtn.disabled = true;
+        startBtn.disabled = false;
+        alert("Stopped scanning");
+      }
+    });
+  </script>
+</body>
+</html>
